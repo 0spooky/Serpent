@@ -20,7 +20,7 @@ public:
     int bodycount;
     std::vector<snakebody> totalbody;
     void bodygrow();
-    int headmovedirection(int direction);
+    int headmovedirection(int direction, sf::Texture &snaketexture);
     snakebodymanager();
 };
 
