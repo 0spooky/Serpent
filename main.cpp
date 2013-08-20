@@ -33,6 +33,10 @@ int main()
     sf::Clock clock; //only used for
     sf::Time time;   //random seed
 
+    sf::Texture snakeheadtexture;
+    if(!snakeheadtexture.loadFromFile("assets/snakehead.png"))
+        std::cout << "ERR: File not found!\n";
+
     sf::Texture snaketexture;
     if(!snaketexture.loadFromFile("assets/snakebody.png"))
         std::cout << "ERR: File not found!\n";
@@ -55,12 +59,15 @@ int main()
 
     snakebodymanager thesnake;
     snakebody head;
-    head.body.setTexture(snaketexture);
+    head.body.setTexture(snakeheadtexture);
+    head.body.setRotation(180);
+    head.body.setOrigin(24,24);
     thesnake.totalbody.push_back(head);
 
     sf::Music gametheme;
     if(!gametheme.openFromFile("assets/loop.wav"))
         std::cout << "ERR: File not found!\n";
+    gametheme.setVolume(33);
     gametheme.setLoop(true);
     gametheme.play();
 
@@ -74,10 +81,14 @@ int main()
                 for(int j = 0; j < 40; j++)
                     gamemap[i][j] = 0;
             }
+            presskey = 0;
+
             thesnake.bodycount = 1;
             thesnake.notlosing = true;
             thesnake.totalbody.clear();
             thesnake.totalbody.push_back(head);
+            thesnake.totalbody[0].body.setRotation(180);
+            thesnake.totalbody[0].body.setOrigin(24,24);
             apple.reinitialise();
             gamerunning = true;
         }
@@ -94,14 +105,36 @@ int main()
                 window.close();
                 break;
             case (sf::Event::KeyPressed):
-                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-                    presskey = 1;
-                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-                    presskey = 2;
-                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-                    presskey = 3;
-                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-                    presskey = 4;
+                if(presskey != 1 && presskey != 2)
+                {
+                    if(event.key.code == sf::Keyboard::Up)
+                    {
+                        presskey = 1;
+                        thesnake.totalbody[0].body.setRotation(0);
+                        thesnake.totalbody[0].body.setOrigin(0,0);
+                    }
+                    else if(event.key.code == sf::Keyboard::Down)
+                    {
+                        presskey = 2;
+                        thesnake.totalbody[0].body.setRotation(180);
+                        thesnake.totalbody[0].body.setOrigin(24,24);
+                    }
+                }
+                if(presskey != 3 && presskey != 4)
+                {
+                    if(event.key.code == sf::Keyboard::Right)
+                    {
+                        presskey = 3;
+                        thesnake.totalbody[0].body.setRotation(90);
+                        thesnake.totalbody[0].body.setOrigin(0,24);
+                    }
+                    else if(event.key.code == sf::Keyboard::Left)
+                    {
+                        presskey = 4;
+                        thesnake.totalbody[0].body.setRotation(270);
+                        thesnake.totalbody[0].body.setOrigin(24,0);
+                    }
+                }
                 break;
             default:
                 break;
@@ -118,7 +151,7 @@ int main()
         {
             thesnake.bodygrow();                                                                 //grow snake body
         }
-        thesnake.headmovedirection(presskey);                                                    //register and update movement
+        thesnake.headmovedirection(presskey, snaketexture);                                                    //register and update movement
         if(thesnake.notlosing == false)                                                          //run during losing conditions
             gamerunning = false;
         thesnake.totalbody[0].body.setPosition(thesnake.totalbody[0].partposx*24, thesnake.totalbody[0].partposy*24); //lock in head sprite position, apparently
