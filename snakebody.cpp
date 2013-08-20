@@ -9,16 +9,19 @@ snakebodymanager::snakebodymanager(){
 
 void snakebodymanager::bodygrow(){
     bodycount++;
-    snakebody newbody(-1, -1);      //this creates a blank body space in order to prevent reading vector[-1]
+    snakebody newbody(-1, -1);//this creates a blank body space in order to prevent reading vector[-1]
     totalbody.push_back(newbody);   //add the blank body to the vector
 }
 
-int snakebodymanager::headmovedirection(int direction){
+int snakebodymanager::headmovedirection(int direction, sf::Texture &snaketexture){
     int stat = direction % 2;       //determine whether direction is a positive x or y or a negative x or y
         for(int i = 1; i < bodycount; i++)
         {
             totalbody[bodycount-i] = totalbody[bodycount-i-1];      //set the very last segment to the second last position, then second last position to third last position, etc.
             totalbody[bodycount-i].body.setPosition(totalbody[bodycount-i-1].partposx * 24, totalbody[bodycount-i-1].partposy * 24);    //sets up the sprites
+            totalbody[bodycount-i].body.setTexture(snaketexture);
+            totalbody[bodycount-i].body.setOrigin(0,0);
+            totalbody[bodycount-i].body.setRotation(0);
         }
     if(direction > 2)           //a direction > 2 is either left or right
         totalbody[0].partposx = totalbody[0].partposx + stat * 2 -1;    //maths
