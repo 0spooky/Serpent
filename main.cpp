@@ -4,7 +4,10 @@
 #include "food.h"
 #include "snakebody.h"
 #include "titlescreen.h"
+#include "badfood.h"
 #include <vector>
+#include <string>
+#include <sstream>
 
 int gamemap[50][40]; //the playing field.  Snake is defined by 1's, food is defined by >=2's, and empty space is defined by 0's
 
@@ -19,8 +22,18 @@ void debugmap(){
     }
 }  //debug stuff
 
+template <typename T>
+std::string to_string(const T& value)
+{
+    std::ostringstream oss;
+    oss << value;
+
+    return oss.str();
+}
+
 int main()
 {
+    int score = 0;
     bool randset = false;  //Has the random seed been randomised?
     bool gamerunning = false;
 
@@ -45,6 +58,10 @@ int main()
     if(!applefood.loadFromFile("assets/apple2.png"))
         std::cout << "ERR: File not found!\n";
 
+    sf::Texture badapplefood;
+    if(!badapplefood.loadFromFile("assets/greenapple.gif"))
+        std::cout << "ERR: File not found!\n";
+
     sf::Texture background;
     if(!background.loadFromFile("assets/pattern.jpg"))
         std::cout << "ERR: File not found!\n";
@@ -56,6 +73,10 @@ int main()
 
     Food apple;     //initialise the food
     apple.foodimage.setTexture(applefood);  //too lazy to put this in the Food class
+
+    badfoodmanager allbadfood;
+    badfood greenapple;
+    greenapple.badapple.setTexture(badapplefood);
 
     snakebodymanager thesnake;
     snakebody head;
@@ -70,6 +91,23 @@ int main()
     gametheme.setVolume(33);
     gametheme.setLoop(true);
     gametheme.play();
+
+    sf::SoundBuffer diesound;
+    if(!diesound.loadFromFile("assets/beep-3.wav"))
+        std::cout << "ERR: File not found!\n";
+
+    sf::Sound diesoundplay;
+    diesoundplay.setBuffer(diesound);
+
+    sf::Font velocette;
+    if(!velocette.loadFromFile("assets/Velocette.ttf"))
+        std::cout << "ERR: File not found!\n";
+
+    sf::Text thescore;
+    thescore.setFont(velocette);
+    thescore.setCharacterSize(64);
+    thescore.setPosition(655, 0);
+    thescore.setString("0");
 
     while(window.isOpen())
     {
@@ -90,9 +128,11 @@ int main()
             thesnake.totalbody[0].body.setRotation(180);
             thesnake.totalbody[0].body.setOrigin(24,24);
             apple.reinitialise();
+            allbadfood.badfoodcount = 0;
+            allbadfood.foodinventory.clear();
             gamerunning = true;
         }
-        //debugmap();                               //MAKE SURE YOU REMOVE BEFORE RELEASE
+        debugmap();                               //MAKE SURE YOU REMOVE BEFORE RELEASE
         window.clear();
         time = clock.getElapsedTime();            //only used for random seed
 
@@ -149,18 +189,42 @@ int main()
 
         if(apple.isEatenQuery(thesnake.totalbody[0].partposx, thesnake.totalbody[0].partposy))   //Test if food is eaten.  If so, spawn new food and...
         {
+            score+=10;
+            if (score == 100)
+                thescore.setPosition(635,0);
+            if (score == 200)
+                thescore.setPosition(625,0);
+            thescore.setString(to_string(score));
             thesnake.bodygrow();                                                                 //grow snake body
-        }
-        thesnake.headmovedirection(presskey, snaketexture);                                                    //register and update movement
+            allbadfood.foodinventory.push_back(greenapple);
+            allbadfood.foodinventory[allbadfood.badfoodcount].randomisenewpos(thesnake.totalbody[0].partposx, thesnake.totalbody[0].partposy);
+            allbadfood.badfoodcount++;
+
+       }
+        thesnake.headmovedirection(presskey, snaketexture);                                      //register and update movement
+
+        if(allbadfood.isEatenQuery(thesnake.totalbody[0].partposx, thesnake.totalbody[0].partposy))
+            thesnake.notlosing = false;
+
         if(thesnake.notlosing == false)                                                          //run during losing conditions
+        {
             gamerunning = false;
+            diesoundplay.play();
+            score = 0;
+            thescore.setString("0");
+        }
         thesnake.totalbody[0].body.setPosition(thesnake.totalbody[0].partposx*24, thesnake.totalbody[0].partposy*24); //lock in head sprite position, apparently
         window.draw(apple.foodimage);
+        for(int i = 0; i < allbadfood.badfoodcount; i++)                                              //draw every segment of snake body
+        {
+            window.draw(allbadfood.foodinventory[i].badapple);
+        }
         window.draw(thesnake.totalbody[0].body);
         for(int i = 1; i < thesnake.bodycount; i++)                                              //draw every segment of snake body
         {
             window.draw(thesnake.totalbody[i].body);
         }
+        window.draw(thescore);
         window.display();
     }
     return 0;
