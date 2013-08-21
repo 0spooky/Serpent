@@ -16,13 +16,16 @@ Food::Food()
 
 bool Food::isEatenQuery(int x, int y)
 {
-    if (gamemap [x][y] >= 2)
+    if (gamemap [x][y] >= 2 && gamemap [x][y] < 10)
     {
         gamemap [x][y] = 1;
         playeat.play();
         foods_eaten++;
+        while(gamemap[foodposx][foodposy] == 1 || gamemap[foodposx][foodposy] == 10)
+        {
         foodposx = rand() % 30;                 //randomise x coordinate
         foodposy = rand() % 25;                 //randomise y coordinate
+        }
         gamemap [foodposx][foodposy] += 5;
         foodimage.setPosition(foodposx*24, foodposy*24);
         return true;
